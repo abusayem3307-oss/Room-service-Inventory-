@@ -3,86 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dual Outlet Inventory System</title>
+    <title>Multi-Outlet Inventory System</title>
     <style>
         *{ box-sizing:border-box; }
         body{ margin:0; font-family:Arial,sans-serif; background:#f3f5f7; color:#222; }
         .container{ max-width:1600px; margin:auto; padding:15px; }
-        .header{ background:#263238; color:white; padding:20px; border-radius:12px; margin-bottom:15px; }
-        .header h1{margin:0} .header p{margin:5px 0 0;opacity:.8}
+        .header{ background:#263238; color:white; padding:20px; border-radius:12px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:15px; }
+        .header-left h1{margin:0} .header-left p{margin:5px 0 0;opacity:.8}
         
-        #lockScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(17, 24, 39, 0.95); display: flex;
-            justify-content: center; align-items: center; z-index: 9999;
-        }
-        .lock-box {
-            background: white; padding: 30px; border-radius: 12px; text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 320px;
-        }
-        .lock-box h3 { margin-top: 0; color: #263238; }
-        .lock-box input { font-size: 22px; text-align: center; letter-spacing: 5px; margin-bottom: 15px; }
-
         .digital-face {
             background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
             border: 1px solid rgba(255, 255, 255, 0.15);
-            color: #00f2fe;
-            padding: 15px 20px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-top: 15px;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.2);
+            color: #00f2fe; padding: 12px 18px; border-radius: 10px;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
         }
-        .digital-clock {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 26px;
-            font-weight: bold;
-            color: #00f2fe;
-            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
-            letter-spacing: 2px;
-        }
-        .digital-date {
-            color: #9ca3af;
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 2px;
-        }
-        .digital-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #10b981;
-            background: rgba(16, 185, 129, 0.12);
-            padding: 8px 14px;
-            border-radius: 20px;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            letter-spacing: 0.5px;
-        }
-        .pulse-dot {
-            width: 9px;
-            height: 9px;
-            background-color: #10b981;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #10b981;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-        }
+        .digital-clock { font-family: monospace; font-size: 20px; font-weight: bold; color: #00f2fe; }
+        .digital-date { color: #9ca3af; font-size: 11px; text-transform: uppercase; }
 
         .outlet-switch-bar { display: flex; gap: 10px; margin-bottom: 15px; }
         .outlet-btn { flex: 1; padding: 14px; font-size: 16px; border-radius: 8px; border: 2px solid #263238; background: #e2e8f0; color: #333; cursor: pointer; font-weight: bold; }
-        .outlet-btn.active-outlet { background: #1976d2; color: white; border-color: #0d47a1; box-shadow: 0 4px 10px rgba(25, 118, 210, 0.4); }
+        .outlet-btn.active-outlet { background: #1976d2; color: white; border-color: #0d47a1; }
 
         .nav{ display:flex; gap:8px; margin-bottom:15px; }
         .nav button{ background:white; border:1px solid #ddd; }
@@ -112,279 +53,243 @@
         .soon{ font-weight:bold; color:#d32f2f; background-color:#ffebee; padding:5px 8px; border-radius:4px; }
         .ok{ font-weight:bold; color:#2e7d32; }
         .hidden{display:none !important}
-        @media(max-width:600px){ .container{padding:8px} .header h1{font-size:21px} .nav button{flex:1} }
         @media print{
             .no-print, .nav, .outlet-switch-bar, .formBox, .cards, .buttons, .form-grid { display:none!important; }
             body{background:white; color:black;} .container{max-width:100%;padding:0; margin:0;}
-            .header{ background:white; color:black; text-align:center; padding:10px 0; border:none; box-shadow:none; }
-            .header h1{ font-size:20px; color:black; }
-            .header p{ color:#555; }
-            .digital-face { display: none !important; }
-            .box { border:none; box-shadow:none; padding:0; margin:0; background:white; }
+            .header{ background:white; color:black; border:none; box-shadow:none; }
             table{min-width:100%!important; width:100%!important; font-size:11px;} 
             th{ background:#eee!important; color:black!important; border:1px solid #999; padding:6px; }
             td{ border:1px solid #ccc; padding:6px; color:black!important; }
-            .expired, .soon, .ok { background:transparent !important; color:black !important; font-weight:bold; }
             @page{ size:A4 landscape; margin:10mm; }
         }
     </style>
 </head>
 <body>
-
-    <div id="lockScreen">
-        <div class="lock-box">
-            <h3>🔒 Enter Security Passcode</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter 4-digit PIN to access system</p>
-            <input type="password" id="pinInput" maxlength="4" placeholder="••••">
-            <button class="save" style="width:100%" onclick="checkPin()">Unlock System</button>
-            <p id="pinError" style="color:red; font-size:12px; margin-top:10px; display:none;">Incorrect Passcode! Use 3307</p>
+    <!-- Admin Login Modal (Pin Hidden / Free Staff Mode) -->
+    <div id="adminModal" class="hidden" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; justify-content:center; align-items:center; z-index:9999;">
+        <div style="background:white; padding:25px; border-radius:12px; text-align:center; width:320px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
+            <h3>🔐 Admin Login</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter Admin PIN to unlock full settings</p>
+            <input type="password" id="adminPinInput" maxlength="4" placeholder="••••" style="font-size:22px; text-align:center; letter-spacing:5px; margin-bottom:15px;">
+            <button class="save" style="width:100%; margin-bottom:8px;" onclick="verifyAdminPin()">Login</button>
+            <button class="clear" style="width:100%;" onclick="closeAdminModal()">Cancel</button>
+            <p id="adminError" style="color:red; font-size:12px; margin-top:10px; display:none;">Incorrect PIN!</p>
         </div>
     </div>
 
-<div class="container">
-    <div class="header">
-        <h1>🥤 Multi-Outlet Inventory System</h1>
-        <p id="activeOutletTitle">Active Outlet: Room Service</p>
-        <div class="digital-face no-print">
-            <div>
-                <div class="digital-clock" id="liveClock">00:00:00 AM</div>
-                <div class="digital-date" id="liveDate">LOADING DATE...</div>
+    <div class="container">
+        <div class="header">
+            <div class="header-left">
+                <h1>🥤 Multi-Outlet Inventory System</h1>
+                <p id="activeOutletTitle">Active Outlet: Room Service</p>
             </div>
-            <div class="digital-status">
-                <span class="pulse-dot"></span> REALTIME SYSTEM ACTIVE
-            </div>
-        </div>
-    </div>
-
-    <!-- OUTLET SWITCH BUTTONS -->
-    <div class="outlet-switch-bar no-print">
-        <button id="btnRoomService" class="outlet-btn active-outlet" onclick="switchOutlet('roomService')">🛏️ Room Service</button>
-        <button id="btnZodiac" class="outlet-btn" onclick="switchOutlet('zodiac')">🍽️ Zodiac Restaurant</button>
-    </div>
-
-    <div class="nav no-print">
-        <button id="dailyBtn" class="active" onclick="showPage('daily')">📊 Daily Stock</button>
-        <button id="masterBtn" onclick="showPage('master')">📦 Inventory Setup</button>
-        <button id="reportBtn" onclick="showPage('reports')">📁 Daily & Monthly Reports</button>
-    </div>
-    <!-- DASHBOARD & DAILY PAGE -->
-    <div id="dailyPage">
-        <div class="cards">
-            <div class="card"><small>Total Items</small><h2 id="totalItems">0</h2></div>
-            <div class="card"><small>Opening</small><h2 id="totalOpening">0</h2></div>
-            <div class="card"><small>Receive</small><h2 id="totalReceive">0</h2></div>
-            <div class="card"><small>Sale</small><h2 id="totalSale">0</h2></div>
-            <div class="card"><small>NC</small><h2 id="totalNC">0</h2></div>
-            <div class="card"><small>Store Close</small><h2 id="totalClose">0</h2></div>
-            <div class="card"><small>Sale Amount</small><h2 id="totalSaleAmount">0.000</h2></div>
-            <div class="card"><small>NC Amount</small><h2 id="totalNCAmount">0.000</h2></div>
-            <div class="card"><small>Total Amount</small><h2 id="grandTotal">0.000</h2></div>
-        </div>
-
-        <!-- DAILY ENTRY -->
-        <div class="box no-print">
-            <h3>📝 Daily Stock Entry</h3>
-            <div class="form-grid">
-                <div>
-                    <label>Select Item</label>
-                    <select id="itemSelect" onchange="selectItem()">
-                        <option value="">-- Select Item --</option>
-                    </select>
+            <div style="display:flex; align-items:center; gap:15px;">
+                <div class="digital-face no-print">
+                    <div>
+                        <div class="digital-clock" id="liveClock">00:00:00 AM</div>
+                        <div class="digital-date" id="liveDate">LOADING...</div>
+                    </div>
                 </div>
-                <div>
-                    <label>Opening Stock</label>
-                    <input id="opening" readonly>
-                </div>
-                <div>
-                    <label>New Receive</label>
-                    <input id="receive" type="number" min="0" value="0" oninput="calculate()">
-                </div>
-                <div>
-                    <label>Sale</label>
-                    <input id="sale" type="number" min="0" value="0" oninput="calculate()">
-                </div>
-                <div>
-                    <label>NC</label>
-                    <input id="nc" type="number" min="0" value="0" oninput="calculate()">
-                </div>
-                <div>
-                    <label>Batch Expiry Date (New Received Stock)</label>
-                    <input id="entryExpiry" type="date">
-                </div>
-            </div>
-
-            <div class="auto">
-                <div class="autoBox"><small>Unit</small><strong id="displayUnit" style="color:#1976d2;">-</strong></div>
-                <div class="autoBox"><small>Packing</small><strong id="displayPacking">-</strong></div>
-                <div class="autoBox"><small>Cost Price</small><strong id="cost">0.000 BD</strong></div>
-                <div class="autoBox"><small>Sale Price</small><strong id="salePrice">0.000 BD</strong></div>
-                <div class="autoBox"><small>NC Price</small><strong id="ncPrice">0.000 BD</strong></div>
-                <div class="autoBox"><small>Mfg Date</small><strong id="mfgDate">-</strong></div>
-                <div class="autoBox"><small>Store Close</small><strong id="close">0</strong></div>
-                <div class="autoBox"><small>Sale Cost</small><strong id="saleCost">0.000 BD</strong></div>
-                <div class="autoBox"><small>NC Cost</small><strong id="ncCost">0.000 BD</strong></div>
-                <div class="autoBox"><small>Sale Amount</small><strong id="saleAmount">0.000 BD</strong></div>
-                <div class="autoBox"><small>NC Amount</small><strong id="ncAmount">0.000 BD</strong></div>
-                <div class="autoBox"><small>Total Amount</small><strong id="totalAmount">0.000 BD</strong></div>
-            </div>
-
-            <div class="buttons">
-                <button class="save" onclick="saveEntry()">💾 Save Entry</button>
-                <button class="clear" onclick="clearEntry()">Clear</button>
+                <button id="adminLoginBtn" class="print no-print" onclick="openAdminModal()" style="background:#374151; color:white;">🔐 Admin Login</button>
+                <button id="adminLogoutBtn" class="print no-print hidden" onclick="logoutAdmin()" style="background:#991b1b; color:white;">🔓 Logout Admin</button>
             </div>
         </div>
 
-        <!-- DAILY TABLE -->
-        <div class="box">
-            <div class="tableTop no-print">
-                <input class="search" id="search" placeholder="🔍 Search item..." oninput="displayDaily()">
-                <button class="print" onclick="window.print()">🖨️ Print Daily Stock</button>
-            </div>
-            <div class="tableWrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Item Name & Packing</th>
-                            <th>Opening</th>
-                            <th>Receive</th>
-                            <th>Sale</th>
-                            <th>NC</th>
-                            <th>Sale Cost</th>
-                            <th>NC Cost</th>
-                            <th>Sale Price</th>
-                            <th>NC Price</th>
-                            <th>Sale Amount</th>
-                            <th>NC Amount</th>
-                            <th>Total Amount</th>
-                            <th>Store Close</th>
-                            <th>Mfg Date</th>
-                            <th>Batch Expiry</th>
-                            <th>Status</th>
-                            <th class="no-print">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dailyTable"></tbody>
-                </table>
-            </div>
+        <!-- OUTLET SWITCH BUTTONS -->
+        <div class="outlet-switch-bar no-print">
+            <button id="btnRoomService" class="outlet-btn active-outlet" onclick="switchOutlet('roomService')">🛏️ Room Service</button>
+            <button id="btnZodiac" class="outlet-btn" onclick="switchOutlet('zodiac')">🍽️ Zodiac Restaurant</button>
         </div>
-    </div>
-
-    <!-- INVENTORY MASTER -->
-    <div id="masterPage" class="hidden">
-        <div class="box formBox no-print">
-            <h3 id="masterTitle">📦 Add New Item</h3>
-            <div class="form-grid">
-                <div><label>Item Name</label><input id="mName" placeholder="Coca Cola"></div>
-                <div><label>Packing</label><input id="mPacking" placeholder="24 x 330ml"></div>
-                <div>
-                    <label>Unit</label>
-                    <select id="mUnit">
-                        <option value="can">can</option>
-                        <option value="bot">bot</option>
-                        <option value="box">box</option>
-                        <option value="pkt">pkt</option>
-                        <option value="pcs">pcs</option>
-                    </select>
-                </div>
-                <div><label>Opening Stock</label><input id="mOpening" type="number" min="0" step="0.01"></div>
-                <div><label>Cost Price</label><input id="mCost" type="number" min="0" step="0.001"></div>
-                <div><label>Sale Price</label><input id="mSalePrice" type="number" min="0" step="0.001"></div>
-                <div><label>NC Price</label><input id="mNCPrice" type="number" min="0" step="0.001"></div>
-                <div><label>Mfg Date (Production)</label><input id="mMfgDate" type="date"></div>
-                <div><label>Master Expiry Date</label><input id="mExpiry" type="date"></div>
-            </div>
-            <div class="buttons">
-                <button class="save" onclick="saveMaster()">💾 Save Item</button>
-                <button class="clear" onclick="clearMaster()">Clear</button>
-            </div>
+        <div class="nav no-print">
+            <button id="dailyBtn" class="active" onclick="showPage('daily')">📊 Daily Stock (Free Staff Mode)</button>
+            <button id="masterBtn" class="hidden" onclick="showPage('master')">📦 Inventory Setup</button>
+            <button id="reportBtn" class="hidden" onclick="showPage('reports')">📁 Daily & Monthly Reports</button>
         </div>
 
-        <div class="box">
-            <div class="tableTop no-print">
-                <input class="search" id="masterSearch" placeholder="🔍 Search inventory..." oninput="displayMaster()">
-                <button class="print" onclick="window.print()">🖨️ Print Inventory List</button>
-            </div>
-            <div class="tableWrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Item Name & Packing</th>
-                            <th>Unit</th>
-                            <th>Opening Stock</th>
-                            <th>Cost Price</th>
-                            <th>Sale Price</th>
-                            <th>NC Price</th>
-                            <th>Mfg Date</th>
-                            <th>Master Expiry</th>
-                            <th class="no-print">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterTable"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    <!-- REPORTS FILE VIEW WITH DATE RANGE & MULTI-ITEM SELECTION -->
-    <div id="reportsPage" class="hidden">
-        <div class="box">
-            <h3>📁 Archive Reports & Custom Date History</h3>
-            
-            <div class="form-grid no-print" style="margin-bottom: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
-                <div>
-                    <label>📅 Start Date (শুরুর তারিখ)</label>
-                    <input type="date" id="reportStartDate" onchange="generateReport()">
-                </div>
-                <div>
-                    <label>📅 End Date (শেষ তারিখ)</label>
-                    <input type="date" id="reportEndDate" onchange="generateReport()">
-                </div>
-            </div>
-
-            <div class="box no-print" style="padding: 12px; margin-bottom: 15px; background: #f8fafc; border: 1px solid #e2e8f0;">
-                <label style="margin-bottom: 8px; color: #1e293b;">☑️ Select Items (এক বা একাধিক আইটেম সিলেক্ট করুন):</label>
-                <div id="reportItemCheckboxes" style="max-height: 130px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; padding: 4px;">
-                    <!-- Dynamically populated checkboxes -->
-                </div>
-            </div>
-
-            <div class="tableTop no-print" style="margin-bottom: 10px;">
-                <span></span>
-                <button class="print" onclick="window.print()">🖨️ Print Report</button>
-            </div>
-
+        <!-- DASHBOARD & DAILY PAGE -->
+        <div id="dailyPage">
             <div class="cards">
-                <div class="card"><small>Filtered Items Sold</small><h2 id="repTotalSale">0</h2></div>
-                <div class="card"><small>Filtered Items Added</small><h2 id="repTotalReceive">0</h2></div>
-                <div class="card"><small>Total Sales Revenue</small><h2 id="repTotalRevenue">0.000 BD</h2></div>
+                <div class="card"><small>Total Items</small><h2 id="totalItems">0</h2></div>
+                <div class="card"><small>Opening</small><h2 id="totalOpening">0</h2></div>
+                <div class="card"><small>Receive</small><h2 id="totalReceive">0</h2></div>
+                <div class="card"><small>Sale</small><h2 id="totalSale">0</h2></div>
+                <div class="card"><small>NC</small><h2 id="totalNC">0</h2></div>
+                <div class="card"><small>Store Close</small><h2 id="totalClose">0</h2></div>
+                <div class="card"><small>Sale Amount</small><h2 id="totalSaleAmount">0.000</h2></div>
+                <div class="card"><small>NC Amount</small><h2 id="totalNCAmount">0.000</h2></div>
+                <div class="card"><small>Total Amount</small><h2 id="grandTotal">0.000</h2></div>
             </div>
 
-            <div class="tableWrap" style="margin-top:15px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Date / Timestamp</th>
-                            <th>Item Name & Packing</th>
-                            <th>Opening</th>
-                            <th>Receive</th>
-                            <th>Sale</th>
-                            <th>NC</th>
-                            <th>Store Close</th>
-                            <th>Total Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reportTable"></tbody>
-                </table>
+            <div class="box no-print">
+                <h3>📝 Daily Stock Entry (Free Staff Mode - No PIN Needed)</h3>
+                <div class="form-grid">
+                    <div>
+                        <label>Select Item</label>
+                        <select id="itemSelect" onchange="selectItem()">
+                            <option value="">-- Select Item --</option>
+                        </select>
+                    </div>
+                    <div><label>Opening Stock</label><input id="opening" readonly></div>
+                    <div><label>New Receive</label><input id="receive" type="number" min="0" value="0" oninput="calculate()"></div>
+                    <div><label>Sale</label><input id="sale" type="number" min="0" value="0" oninput="calculate()"></div>
+                    <div><label>NC</label><input id="nc" type="number" min="0" value="0" oninput="calculate()"></div>
+                    <div><label>Batch Expiry Date</label><input id="entryExpiry" type="date"></div>
+                </div>
+
+                <div class="auto">
+                    <div class="autoBox"><small>Unit</small><strong id="displayUnit" style="color:#1976d2;">-</strong></div>
+                    <div class="autoBox"><small>Packing</small><strong id="displayPacking">-</strong></div>
+                    <div class="autoBox"><small>Cost Price</small><strong id="cost">0.000 BD</strong></div>
+                    <div class="autoBox"><small>Sale Price</small><strong id="salePrice">0.000 BD</strong></div>
+                    <div class="autoBox"><small>NC Price</small><strong id="ncPrice">0.000 BD</strong></div>
+                    <div class="autoBox"><small>Mfg Date</small><strong id="mfgDate">-</strong></div>
+                    <div class="autoBox"><small>Store Close</small><strong id="close">0</strong></div>
+                    <div class="autoBox"><small>Sale Cost</small><strong id="saleCost">0.000 BD</strong></div>
+                    <div class="autoBox"><small>NC Cost</small><strong id="ncCost">0.000 BD</strong></div>
+                    <div class="autoBox"><small>Sale Amount</small><strong id="saleAmount">0.000 BD</strong></div>
+                    <div class="autoBox"><small>NC Amount</small><strong id="ncAmount">0.000 BD</strong></div>
+                    <div class="autoBox"><small>Total Amount</small><strong id="totalAmount">0.000 BD</strong></div>
+                </div>
+
+                <div class="buttons">
+                    <button class="save" onclick="saveEntry()">💾 Save Entry</button>
+                    <button class="clear" onclick="clearEntry()">Clear</button>
+                </div>
+            </div>
+            <div class="box">
+                <div class="tableTop no-print">
+                    <input class="search" id="search" placeholder="🔍 Search item..." oninput="displayDaily()">
+                    <button id="printDailyBtn" class="print hidden" onclick="window.print()">🖨️ Print Daily Stock</button>
+                </div>
+                <div class="tableWrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Item Name & Packing</th>
+                                <th>Opening</th>
+                                <th>Receive</th>
+                                <th>Sale</th>
+                                <th>NC</th>
+                                <th>Sale Cost</th>
+                                <th>NC Cost</th>
+                                <th>Sale Price</th>
+                                <th>NC Price</th>
+                                <th>Sale Amount</th>
+                                <th>NC Amount</th>
+                                <th>Total Amount</th>
+                                <th>Store Close</th>
+                                <th>Mfg Date</th>
+                                <th>Batch Expiry</th>
+                                <th>Status</th>
+                                <th id="thAction" class="no-print hidden">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dailyTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVENTORY MASTER (Admin Only) -->
+        <div id="masterPage" class="hidden">
+            <div class="box formBox no-print">
+                <h3 id="masterTitle">📦 Add New Item</h3>
+                <div class="form-grid">
+                    <div><label>Item Name</label><input id="mName" placeholder="Coca Cola"></div>
+                    <div><label>Packing</label><input id="mPacking" placeholder="24 x 330ml"></div>
+                    <div>
+                        <label>Unit</label>
+                        <select id="mUnit">
+                            <option value="can">can</option>
+                            <option value="bot">bot</option>
+                            <option value="box">box</option>
+                            <option value="pkt">pkt</option>
+                            <option value="pcs">pcs</option>
+                        </select>
+                    </div>
+                    <div><label>Opening Stock</label><input id="mOpening" type="number" min="0" step="0.01"></div>
+                    <div><label>Cost Price</label><input id="mCost" type="number" min="0" step="0.001"></div>
+                    <div><label>Sale Price</label><input id="mSalePrice" type="number" min="0" step="0.001"></div>
+                    <div><label>NC Price</label><input id="mNCPrice" type="number" min="0" step="0.001"></div>
+                    <div><label>Mfg Date</label><input id="mMfgDate" type="date"></div>
+                    <div><label>Master Expiry Date</label><input id="mExpiry" type="date"></div>
+                </div>
+                <div class="buttons">
+                    <button class="save" onclick="saveMaster()">💾 Save Item</button>
+                    <button class="clear" onclick="clearMaster()">Clear</button>
+                </div>
+            </div>
+
+            <div class="box">
+                <div class="tableTop no-print">
+                    <input class="search" id="masterSearch" placeholder="🔍 Search inventory..." oninput="displayMaster()">
+                    <button class="print" onclick="window.print()">🖨️ Print Inventory List</button>
+                </div>
+                <div class="tableWrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Item Name & Packing</th>
+                                <th>Unit</th>
+                                <th>Opening Stock</th>
+                                <th>Cost Price</th>
+                                <th>Sale Price</th>
+                                <th>NC Price</th>
+                                <th>Mfg Date</th>
+                                <th>Master Expiry</th>
+                                <th class="no-print">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="masterTable"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- REPORTS PAGE (Admin Only) -->
+        <div id="reportsPage" class="hidden">
+            <div class="box">
+                <h3>📁 Archive Reports & Custom Date History</h3>
+                <div class="form-grid no-print" style="margin-bottom: 12px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                    <div><label>📅 Start Date</label><input type="date" id="reportStartDate" onchange="generateReport()"></div>
+                    <div><label>📅 End Date</label><input type="date" id="reportEndDate" onchange="generateReport()"></div>
+                </div>
+                <div class="box no-print" style="padding: 12px; margin-bottom: 15px; background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <label style="margin-bottom: 8px; color: #1e293b;">☑️ Select Items:</label>
+                    <div id="reportItemCheckboxes" style="max-height: 130px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 8px; padding: 4px;"></div>
+                </div>
+                <div class="tableTop no-print" style="margin-bottom: 10px;">
+                    <span></span>
+                    <button class="print" onclick="window.print()">🖨️ Print Report</button>
+                </div>
+                <div class="cards">
+                    <div class="card"><small>Filtered Items Sold</small><h2 id="repTotalSale">0</h2></div>
+                    <div class="card"><small>Filtered Items Added</small><h2 id="repTotalReceive">0</h2></div>
+                    <div class="card"><small>Total Sales Revenue</small><h2 id="repTotalRevenue">0.000 BD</h2></div>
+                </div>
+                <div class="tableWrap" style="margin-top:15px;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>S/N</th>
+                                <th>Date / Timestamp</th>
+                                <th>Item Name & Packing</th>
+                                <th>Opening</th>
+                                <th>Receive</th>
+                                <th>Sale</th>
+                                <th>NC</th>
+                                <th>Store Close</th>
+                                <th>Total Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportTable"></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
-
-</div>
-
-<!-- FIREBASE SDK & APP LOGIC -->
-<script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { 
         getFirestore, collection, addDoc, setDoc, doc, deleteDoc, onSnapshot 
@@ -402,21 +307,62 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    let currentOutlet = 'roomService'; // Default outlet
+    let currentOutlet = 'roomService';
+    let userRole = 'staff'; 
     let masterItems = [];
     let dailyEntries = [];
     let masterEditId = null;
     let unsubMaster = null;
     let unsubDaily = null;
 
-    window.checkPin = function() {
-        const pin = document.getElementById('pinInput').value;
+    window.openAdminModal = function() {
+        document.getElementById('adminModal').classList.remove('hidden');
+        document.getElementById('adminPinInput').value = "";
+        document.getElementById('adminError').style.display = 'none';
+    };
+
+    window.closeAdminModal = function() {
+        document.getElementById('adminModal').classList.add('hidden');
+    };
+
+    window.verifyAdminPin = function() {
+        const pin = document.getElementById('adminPinInput').value;
         if(pin === "3307") {
-            document.getElementById('lockScreen').style.display = 'none';
+            userRole = 'admin';
+            closeAdminModal();
+            applyAdminPermissions();
+            alert("Admin Access Granted Successfully!");
         } else {
-            document.getElementById('pinError').style.display = 'block';
+            document.getElementById('adminError').style.display = 'block';
         }
     };
+
+    window.logoutAdmin = function() {
+        userRole = 'staff';
+        applyStaffPermissions();
+        showPage('daily');
+        alert("Logged out from Admin mode.");
+    };
+
+    function applyAdminPermissions() {
+        document.getElementById('masterBtn').classList.remove('hidden');
+        document.getElementById('reportBtn').classList.remove('hidden');
+        document.getElementById('printDailyBtn').classList.remove('hidden');
+        document.getElementById('thAction').classList.remove('hidden');
+        document.getElementById('adminLoginBtn').classList.add('hidden');
+        document.getElementById('adminLogoutBtn').classList.remove('hidden');
+        displayDaily();
+    }
+
+    function applyStaffPermissions() {
+        document.getElementById('masterBtn').classList.add('hidden');
+        document.getElementById('reportBtn').classList.add('hidden');
+        document.getElementById('printDailyBtn').classList.add('hidden');
+        document.getElementById('thAction').classList.add('hidden');
+        document.getElementById('adminLoginBtn').classList.remove('hidden');
+        document.getElementById('adminLogoutBtn').classList.add('hidden');
+        displayDaily();
+    }
 
     function updateDigitalClock() {
         const now = new Date();
@@ -427,7 +373,7 @@
         const formattedHours = String(hours % 12 || 12).padStart(2, '0');
         
         const timeString = `${formattedHours}:${minutes}:${seconds} ${ampm}`;
-        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
         const dateString = now.toLocaleDateString('en-US', options);
 
         const clockEl = document.getElementById('liveClock');
@@ -480,6 +426,11 @@
     };
 
     window.showPage = function(page) {
+        if (userRole === 'staff' && (page === 'master' || page === 'reports')) {
+            alert("Access Denied! Staff mode is free for daily entries only.");
+            return;
+        }
+
         document.getElementById('dailyPage').classList.add('hidden');
         document.getElementById('masterPage').classList.add('hidden');
         document.getElementById('reportsPage').classList.add('hidden');
@@ -490,17 +441,17 @@
         if (page === 'daily') {
             document.getElementById('dailyPage').classList.remove('hidden');
             document.getElementById('dailyBtn').classList.add('active');
-        } else if (page === 'master') {
+        } else if (page === 'master' && userRole === 'admin') {
             document.getElementById('masterPage').classList.remove('hidden');
             document.getElementById('masterBtn').classList.add('active');
-        } else if (page === 'reports') {
+        } else if (page === 'reports' && userRole === 'admin') {
             document.getElementById('reportsPage').classList.remove('hidden');
             document.getElementById('reportBtn').classList.add('active');
             generateReport();
         }
     };
-
-    window.saveMaster = async function() {
+        window.saveMaster = async function() {
+        if (userRole !== 'admin') return;
         const name = document.getElementById('mName').value.trim();
         const packing = document.getElementById('mPacking').value.trim();
         const unit = document.getElementById('mUnit').value;
@@ -511,10 +462,7 @@
         const mfgDate = document.getElementById('mMfgDate').value;
         const expiry = document.getElementById('mExpiry').value;
 
-        if (!name) {
-            alert("Please enter Item Name!");
-            return;
-        }
+        if (!name) { alert("Please enter Item Name!"); return; }
 
         const itemData = { name, packing, unit, opening, cost, salePrice, ncPrice, mfgDate, expiry };
         const masterCol = currentOutlet === 'roomService' ? "masterItems" : "zodiac_masterItems";
@@ -528,9 +476,7 @@
                 document.getElementById('masterTitle').innerText = "📦 Add New Item";
             }
             clearMaster();
-        } catch(e) {
-            alert("Error saving to Firebase: " + e.message);
-        }
+        } catch(e) { alert("Error saving: " + e.message); }
     };
 
     window.clearMaster = function() {
@@ -575,7 +521,9 @@
             }
         });
     };
+
     window.editMaster = function(id) {
+        if (userRole !== 'admin') return;
         const item = masterItems.find(i => i.id === id);
         if (!item) return;
         document.getElementById('mName').value = item.name;
@@ -589,10 +537,12 @@
         document.getElementById('mExpiry').value = item.expiry || "";
         masterEditId = id;
         document.getElementById('masterTitle').innerText = "✏️ Edit Item";
+        showPage('master');
     };
 
     window.deleteMaster = async function(id) {
-        if (confirm("Are you sure you want to delete this item?")) {
+        if (userRole !== 'admin') return;
+        if (confirm("Delete this item?")) {
             const masterCol = currentOutlet === 'roomService' ? "masterItems" : "zodiac_masterItems";
             await deleteDoc(doc(db, masterCol, id));
         }
@@ -622,10 +572,7 @@
 
     window.selectItem = function() {
         const index = document.getElementById('itemSelect').value;
-        if (index === "") {
-            clearEntry();
-            return;
-        }
+        if (index === "") { clearEntry(); return; }
         const item = masterItems[index];
         document.getElementById('opening').value = item.opening;
         document.getElementById('displayUnit').innerText = (item.unit || "can").toUpperCase();
@@ -665,10 +612,7 @@
 
     window.saveEntry = async function() {
         const index = document.getElementById('itemSelect').value;
-        if (index === "") {
-            alert("Please select an item first!");
-            return;
-        }
+        if (index === "") { alert("Please select an item first!"); return; }
 
         const item = masterItems[index];
         const opening = parseFloat(document.getElementById('opening').value) || 0;
@@ -706,9 +650,8 @@
             await addDoc(collection(db, dailyCol), entry);
             await setDoc(doc(db, masterCol, item.id), { opening: close }, { merge: true });
             clearEntry();
-        } catch(e) {
-            alert("Error saving entry: " + e.message);
-        }
+            alert("Entry saved successfully!");
+        } catch(e) { alert("Error saving entry: " + e.message); }
     };
 
     window.clearEntry = function() {
@@ -766,6 +709,11 @@
                 const status = checkExpiryStatus(e.expiry);
                 const displayName = e.packing ? `${e.name} (${e.packing}) [${e.unit || 'can'}]` : `${e.name} [${e.unit || 'can'}]`;
 
+                let actionHtml = '';
+                if (userRole === 'admin') {
+                    actionHtml = `<td class="no-print"><button class="delete" onclick="deleteDaily('${e.id}')">Delete</button></td>`;
+                }
+
                 tbody.innerHTML += `
                     <tr>
                         <td>${i + 1}</td>
@@ -785,9 +733,7 @@
                         <td>${e.mfgDate || '-'}</td>
                         <td>${e.expiry || '-'}</td>
                         <td class="${status.class}">${status.text}</td>
-                        <td class="no-print">
-                            <button class="delete" onclick="deleteDaily('${e.id}')">Delete</button>
-                        </td>
+                        ${actionHtml}
                     </tr>
                 `;
             }
@@ -805,6 +751,7 @@
     };
 
     window.deleteDaily = async function(id) {
+        if (userRole !== 'admin') return;
         if (confirm("Delete this entry?")) {
             const dailyCol = currentOutlet === 'roomService' ? "dailyEntries" : "zodiac_dailyEntries";
             await deleteDoc(doc(db, dailyCol, id));
@@ -812,9 +759,9 @@
     };
 
     window.generateReport = function() {
+        if (userRole !== 'admin') return;
         const startDate = document.getElementById('reportStartDate').value;
         const endDate = document.getElementById('reportEndDate').value;
-        
         const checkboxes = document.querySelectorAll('#reportItemCheckboxes input[type="checkbox"]:checked');
         const selectedItems = Array.from(checkboxes).map(cb => cb.value);
 
@@ -828,7 +775,6 @@
         const filtered = dailyEntries.filter(e => {
             if(!e.createdAt) return false;
             const eDate = e.createdAt.split('T')[0];
-            
             let dateMatch = true;
             if (startDate && eDate < startDate) dateMatch = false;
             if (endDate && eDate > endDate) dateMatch = false;
@@ -837,7 +783,6 @@
             if (selectedItems.length > 0) {
                 itemMatch = selectedItems.includes(e.name);
             }
-
             return dateMatch && itemMatch;
         });
 
@@ -869,8 +814,9 @@
         document.getElementById('repTotalRevenue').innerText = totalRevenueSum.toFixed(3) + " BD";
     };
 
-    // Initial load
     setupFirebaseListeners();
 </script>
 </body>
 </html>
+    
+    
