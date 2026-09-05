@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beverage Inventory System</title>
+    <style>
+        *{ box-sizing:border-box; }
+        body{ margin:0; font-family:Arial,sans-serif; background:#f3f5f7; color:#222; }
+        .container{ max-width:1600px; margin:auto; padding:15px; }
+        .header{ background:#263238; color:white; padding:20px; border-radius:12px; margin-bottom:15px; }
+        .header h1{margin:0} .header p{margin:5px 0 0;opacity:.8}
+        
+        /* UNIQUE DIGITAL FACE WIDGET STYLES */
+        .digital-face {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #00f2fe;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .digital-clock {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 26px;
+            font-weight: bold;
+            color: #00f2fe;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+            letter-spacing: 2px;
+        }
+        .digital-date {
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+        .digital-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .pulse-dot {
+            width: 9px;
+            height: 9px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .nav{ display:flex; gap:8px; margin-bottom:15px; }
+        .nav button{ background:white; border:1px solid #ddd; }
+        .nav .active{ background:#1976d2; color:white; }
+        .box{ background:white; padding:18px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+        .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin-bottom:15px; }
+        .card{ background:white; padding:15px; border-radius:10px; box-shadow:0 2px 7px rgba(0,0,0,.07); }
+        .card small{color:#666} .card h2{margin:7px 0 0}
+        .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+        label{ display:block; font-size:13px; font-weight:bold; margin-bottom:5px; }
+        input,select{ width:100%; padding:11px; border:1px solid #ccc; border-radius:7px; }
+        input[readonly]{ background:#eee; }
+        button{ padding:11px 16px; border:0; border-radius:7px; cursor:pointer; font-weight:bold; }
+        .save{background:#1976d2;color:white} .clear{background:#777;color:white}
+        .edit{background:#f57c00;color:white} .delete{background:#d32f2f;color:white} .print{background:#2e7d32;color:white}
+        .buttons{ display:flex; gap:10px; margin-top:15px; flex-wrap:wrap; }
+        .auto{ margin-top:15px; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+        .autoBox{ background:#f1f3f4; padding:12px; border-radius:8px; }
+        .autoBox small{color:#666} .autoBox strong{ display:block; margin-top:5px; font-size:15px; }
+        .tableTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+        .search{max-width:350px}
+        .tableWrap{overflow-x:auto}
+        table{ width:100%; border-collapse:collapse; min-width:1800px; }
+        th{ background:#263238; color:white; padding:11px 8px; font-size:12px; white-space:nowrap; }
+        td{ padding:10px 7px; border-bottom:1px solid #ddd; text-align:center; font-size:12px; white-space:nowrap; }
+        
+        .expired{ font-weight:bold; color:#b71c1c; background-color:#ffcdd2; padding:5px 8px; border-radius:4px; }
+        .soon{ font-weight:bold; color:#d32f2f; background-color:#ffebee; padding:5px 8px; border-radius:4px; }
+        .ok{ font-weight:bold; color:#2e7d32; }
+        
+        .hidden{display:none}
+        @media(max-width:600px){ .container{padding:8px} .header h1{font-size:21px} .nav button{flex:1} }
+        @media print{
+            .no-print,.nav,.formBox,.cards{display:none!important}
+            body{background:white} .container{max-width:100%;padding:0}
+            .header{ background:white; color:black; text-align:center; }
+            table{min-width:100%} th{ background:#ddd!important; color:black!important; }
+            @page{ size:A4 landscape; margin:7mm; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <div class="header">
+        <h1>🥤 Beverage Inventory System</h1>
+        <p>F&B Stock Management (Firebase Connected)</p>
+
+        <!-- DIGITAL FACE WIDGET -->
+        <div class="digital-face no-print">
+            <div>
+                <div class="digital-clock" id="liveClock">00:00:00 AM</div>
+                <div class="digital-date" id="liveDate">LOADING DATE...</div>
+            </div>
+            <div class="digital-status">
+                <span class="pulse-dot"></span> REALTIME SYSTEM ACTIVE
+            </div>
+        </div>
+    </div>
+
+    <div class="nav no-print">
+        <button id="dailyBtn" class="active" onclick="showPage('daily')">📊 Daily Stock</button>
+        <button id="masterBtn" onclick="showPage('master')">📦 Inventory Setup</button>
+    </div>
+
+    <!-- DASHBOARD & DAILY PAGE -->
+    <div id="dailyPage">
+
+        <div class="cards">
+            <div class="card"><small>Total Items</small><h2 id="totalItems">0</h2></div>
+            <div class="card"><small>Opening</small><h2 id="totalOpening">0</h2></div>
+            <div class="card"><small>Receive</small><h2 id="totalReceive">0</h2></div>
+            <div class="card"><small>Sale</small><h2 id="totalSale">0</h2></div>
+            <div class="card"><small>NC</small><h2 id="totalNC">0</h2></div>
+            <div class="card"><small>Store Close</small><h2 id="totalClose">0</h2></div>
+            <div class="card"><small>Sale Amount</small><h2 id="totalSaleAmount">0.000</h2></div>
+            <div class="card"><small>NC Amount</small><h2 id="totalNCAmount">0.000</h2></div>
+            <div class="card"><small>Total Amount</small><h2 id="grandTotal">0.000</h2></div>
+        </div>
+
+        <!-- DAILY ENTRY -->
+        <div class="box no-print">
+            <h3>📝 Daily Stock Entry</h3>
+            <div class="form-grid">
+                <div>
+                    <label>Select Item</label>
+                    <select id="itemSelect" onchange="selectItem()">
+                        <option value="">-- Select Item --</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Opening Stock</label>
+                    <input id="opening" readonly>
+                </div>
+                <div>
+                    <label>New Receive</label>
+                    <input id="receive" type="number" min="0" value="0" oninput="calculate()">
+                </div>
+                <div>
+                    <label>Sale</label>
+                    <input id="sale" type="number" min="0" value="0" oninput="calculate()">
+                </div>
+                <div>
+                    <label>NC</label>
+                    <input id="nc" type="number" min="0" value="0" oninput="calculate()">
+                </div>
+                <div>
+                    <label>Batch Expiry Date (New Received Stock)</label>
+                    <input id="entryExpiry" type="date">
+                </div>
+            </div>
+
+            <div class="auto">
+                <div class="autoBox"><small>Unit</small><strong id="displayUnit" style="color:#1976d2;">-</strong></div>
+                <div class="autoBox"><small>Packing</small><strong id="displayPacking">-</strong></div>
+                <div class="autoBox"><small>Cost Price</small><strong id="cost">0.000 BD</strong></div>
+                <div class="autoBox"><small>Sale Price</small><strong id="salePrice">0.000 BD</strong></div>
+                <div class="autoBox"><small>NC Price</small><strong id="ncPrice">0.000 BD</strong></div>
+                <div class="autoBox"><small>Mfg Date</small><strong id="mfgDate">-</strong></div>
+                <div class="autoBox"><small>Store Close</small><strong id="close">0</strong></div>
+                <div class="autoBox"><small>Sale Cost</small><strong id="saleCost">0.000 BD</strong></div>
+                <div class="autoBox"><small>NC Cost</small><strong id="ncCost">0.000 BD</strong></div>
+                <div class="autoBox"><small>Sale Amount</small><strong id="saleAmount">0.000 BD</strong></div>
+                <div class="autoBox"><small>NC Amount</small><strong id="ncAmount">0.000 BD</strong></div>
+                <div class="autoBox"><small>Total Amount</small><strong id="totalAmount">0.000 BD</strong></div>
+            </div>
+
+            <div class="buttons">
+                <button class="save" onclick="saveEntry()">💾 Save Entry</button>
+                <button class="clear" onclick="clearEntry()">Clear</button>
+            </div>
+        </div>
+        <!-- DAILY TABLE -->
+        <div class="box">
+            <div class="tableTop no-print">
+                <input class="search" id="search" placeholder="🔍 Search item..." oninput="displayDaily()">
+                <button class="print" onclick="window.print()">🖨️ Print Report</button>
+            </div>
+            <div class="tableWrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Item Name & Packing</th>
+                            <th>Opening</th>
+                            <th>Receive</th>
+                            <th>Sale</th>
+                            <th>NC</th>
+                            <th>Sale Cost</th>
+                            <th>NC Cost</th>
+                            <th>Sale Price</th>
+                            <th>NC Price</th>
+                            <th>Sale Amount</th>
+                            <th>NC Amount</th>
+                            <th>Total Amount</th>
+                            <th>Store Close</th>
+                            <th>Mfg Date</th>
+                            <th>Batch Expiry</th>
+                            <th>Status</th>
+                            <th class="no-print">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyTable"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- INVENTORY MASTER -->
+    <div id="masterPage" class="hidden">
+        <div class="box formBox no-print">
+            <h3 id="masterTitle">📦 Add New Item</h3>
+            <div class="form-grid">
+                <div><label>Item Name</label><input id="mName" placeholder="Coca Cola"></div>
+                <div><label>Packing</label><input id="mPacking" placeholder="24 x 330ml"></div>
+                <div>
+                    <label>Unit</label>
+                    <select id="mUnit">
+                        <option value="can">can</option>
+                        <option value="bot">bot</option>
+                        <option value="box">box</option>
+                        <option value="pkt">pkt</option>
+                        <option value="pcs">pcs</option>
+                    </select>
+                </div>
+                <div><label>Opening Stock</label><input id="mOpening" type="number" min="0" step="0.01"></div>
+                <div><label>Cost Price</label><input id="mCost" type="number" min="0" step="0.001"></div>
+                <div><label>Sale Price</label><input id="mSalePrice" type="number" min="0" step="0.001"></div>
+                <div><label>NC Price</label><input id="mNCPrice" type="number" min="0" step="0.001"></div>
+                <div><label>Mfg Date (Production)</label><input id="mMfgDate" type="date"></div>
+                <div><label>Master Expiry Date</label><input id="mExpiry" type="date"></div>
+            </div>
+            <div class="buttons">
+                <button class="save" onclick="saveMaster()">💾 Save Item</button>
+                <button class="clear" onclick="clearMaster()">Clear</button>
+            </div>
+        </div>
+
+        <div class="box">
+            <div class="tableTop no-print">
+                <input class="search" id="masterSearch" placeholder="🔍 Search inventory..." oninput="displayMaster()">
+            </div>
+            <div class="tableWrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Item Name & Packing</th>
+                            <th>Unit</th>
+                            <th>Opening Stock</th>
+                            <th>Cost Price</th>
+                            <th>Sale Price</th>
+                            <th>NC Price</th>
+                            <th>Mfg Date</th>
+                            <th>Master Expiry</th>
+                            <th class="no-print">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- FIREBASE SDK & APP LOGIC -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { 
+        getFirestore, collection, addDoc, setDoc, doc, deleteDoc, onSnapshot 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyChnmkoLdAFTYuK9gxnD5RX3qyz_qK4LoU",
+      authDomain: "room-service-inventory.firebaseapp.com",
+      projectId: "room-service-inventory",
+      storageBucket: "room-service-inventory.firebasestorage.app",
+      messagingSenderId: "402810379751",
+      appId: "1:402810379751:web:4335ba9136eb8654a3b142"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    let masterItems = [];
+    let dailyEntries = [];
+    let masterEditId = null;
+
+    // DIGITAL CLOCK
+    function updateDigitalClock() {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const seconds = String(now.getSeconds()).padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const formattedHours = String(hours % 12 || 12).padStart(2, '0');
+        
+        const timeString = `${formattedHours}:${minutes}:${seconds} ${ampm}`;
+        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
+        const dateString = now.toLocaleDateString('en-US', options);
+
+        const clockEl = document.getElementById('liveClock');
+        const dateEl = document.getElementById('liveDate');
+        if (clockEl) clockEl.innerText = timeString;
+        if (dateEl) dateEl.innerText = dateString;
+    }
+    setInterval(updateDigitalClock, 1000);
+    updateDigitalClock();
+
+    onSnapshot(collection(db, "masterItems"), (snapshot) => {
+        masterItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        populateSelect();
+        displayMaster();
+    });
+
+    onSnapshot(collection(db, "dailyEntries"), (snapshot) => {
+        dailyEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        displayDaily();
+    });
+
+    window.showPage = function(page) {
+        if (page === 'daily') {
+            document.getElementById('dailyPage').classList.remove('hidden');
+            document.getElementById('masterPage').classList.add('hidden');
+            document.getElementById('dailyBtn').classList.add('active');
+            document.getElementById('masterBtn').classList.remove('active');
+        } else {
+            document.getElementById('dailyPage').classList.add('hidden');
+            document.getElementById('masterPage').classList.remove('hidden');
+            document.getElementById('dailyBtn').classList.remove('active');
+            document.getElementById('masterBtn').classList.add('active');
+        }
+    };
+
+    window.saveMaster = async function() {
+        const name = document.getElementById('mName').value.trim();
+        const packing = document.getElementById('mPacking').value.trim();
+        const unit = document.getElementById('mUnit').value;
+        const opening = parseFloat(document.getElementById('mOpening').value) || 0;
+        const cost = parseFloat(document.getElementById('mCost').value) || 0;
+        const salePrice = parseFloat(document.getElementById('mSalePrice').value) || 0;
+        const ncPrice = parseFloat(document.getElementById('mNCPrice').value) || 0;
+        const mfgDate = document.getElementById('mMfgDate').value;
+        const expiry = document.getElementById('mExpiry').value;
+
+        if (!name) {
+            alert("Please enter Item Name!");
+            return;
+        }
+
+        const itemData = { name, packing, unit, opening, cost, salePrice, ncPrice, mfgDate, expiry };
+
+        try {
+            if (!masterEditId) {
+                await addDoc(collection(db, "masterItems"), itemData);
+            } else {
+                await setDoc(doc(db, "masterItems", masterEditId), itemData);
+                masterEditId = null;
+                document.getElementById('masterTitle').innerText = "📦 Add New Item";
+            }
+            clearMaster();
+        } catch(e) {
+            alert("Error saving to Firebase: " + e.message);
+        }
+    };
+
+    window.clearMaster = function() {
+        document.getElementById('mName').value = "";
+        document.getElementById('mPacking').value = "";
+        document.getElementById('mUnit').value = "can";
+        document.getElementById('mOpening').value = "";
+        document.getElementById('mCost').value = "";
+        document.getElementById('mSalePrice').value = "";
+        document.getElementById('mNCPrice').value = "";
+        document.getElementById('mMfgDate').value = "";
+        document.getElementById('mExpiry').value = "";
+        masterEditId = null;
+        document.getElementById('masterTitle').innerText = "📦 Add New Item";
+    };
+
+    window.displayMaster = function() {
+        const tbody = document.getElementById('masterTable');
+        const search = document.getElementById('masterSearch').value.toLowerCase();
+        tbody.innerHTML = "";
+
+        masterItems.forEach((item, i) => {
+            if (item.name.toLowerCase().includes(search)) {
+                const displayName = item.packing ? `${item.name} (${item.packing})` : item.name;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><b>${displayName}</b></td>
+                        <td><span class="ok">[${item.unit || 'can'}]</span></td>
+                        <td>${item.opening}</td>
+                        <td>${(item.cost || 0).toFixed(3)} BD</td>
+                        <td>${(item.salePrice || 0).toFixed(3)} BD</td>
+                        <td>${(item.ncPrice || 0).toFixed(3)} BD</td>
+                        <td>${item.mfgDate || '-'}</td>
+                        <td>${item.expiry || '-'}</td>
+                        <td class="no-print">
+                            <button class="edit" onclick="editMaster('${item.id}')">Edit</button>
+                            <button class="delete" onclick="deleteMaster('${item.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+    };
+
+    window.editMaster = function(id) {
+        const item = masterItems.find(i => i.id === id);
+        if (!item) return;
+        document.getElementById('mName').value = item.name;
+        document.getElementById('mPacking').value = item.packing || "";
+        document.getElementById('mUnit').value = item.unit || "can";
+        document.getElementById('mOpening').value = item.opening;
+        document.getElementById('mCost').value = item.cost;
+        document.getElementById('mSalePrice').value = item.salePrice;
+        document.getElementById('mNCPrice').value = item.ncPrice;
+        document.getElementById('mMfgDate').value = item.mfgDate || "";
+        document.getElementById('mExpiry').value = item.expiry || "";
+        masterEditId = id;
+        document.getElementById('masterTitle').innerText = "✏️ Edit Item";
+    };
+
+    window.deleteMaster = async function(id) {
+        if (confirm("Are you sure you want to delete this item?")) {
+            await deleteDoc(doc(db, "masterItems", id));
+        }
+    };
+
+    function populateSelect() {
+        const select = document.getElementById('itemSelect');
+        select.innerHTML = '<option value="">-- Select Item --</option>';
+        masterItems.forEach((item, i) => {
+            const label = item.packing ? `${item.name} (${item.packing}) [${item.unit || 'can'}]` : `${item.name} [${item.unit || 'can'}]`;
+            select.innerHTML += `<option value="${i}">${label}</option>`;
+        });
+    }
+
+    window.selectItem = function() {
+        const index = document.getElementById('itemSelect').value;
+        if (index === "") {
+            clearEntry();
+            return;
+        }
+        const item = masterItems[index];
+        document.getElementById('opening').value = item.opening;
+        document.getElementById('displayUnit').innerText = (item.unit || "can").toUpperCase();
+        document.getElementById('displayPacking').innerText = item.packing || "-";
+        document.getElementById('cost').innerText = (item.cost || 0).toFixed(3) + " BD";
+        document.getElementById('salePrice').innerText = (item.salePrice || 0).toFixed(3) + " BD";
+        document.getElementById('ncPrice').innerText = (item.ncPrice || 0).toFixed(3) + " BD";
+        document.getElementById('mfgDate').innerText = item.mfgDate || "-";
+        document.getElementById('entryExpiry').value = ""; 
+        calculate();
+    };
+
+    window.calculate = function() {
+        const opening = parseFloat(document.getElementById('opening').value) || 0;
+        const receive = parseFloat(document.getElementById('receive').value) || 0;
+        const sale = parseFloat(document.getElementById('sale').value) || 0;
+        const nc = parseFloat(document.getElementById('nc').value) || 0;
+
+        const index = document.getElementById('itemSelect').value;
+        if (index === "") return;
+
+        const item = masterItems[index];
+        const close = opening + receive - sale - nc;
+        const saleCost = sale * item.cost;
+        const ncCost = nc * item.cost;
+        const saleAmount = sale * item.salePrice;
+        const ncAmount = nc * item.ncPrice;
+        const totalAmount = saleAmount + ncAmount;
+
+        document.getElementById('close').innerText = close;
+        document.getElementById('saleCost').innerText = saleCost.toFixed(3) + " BD";
+        document.getElementById('ncCost').innerText = ncCost.toFixed(3) + " BD";
+        document.getElementById('saleAmount').innerText = saleAmount.toFixed(3) + " BD";
+        document.getElementById('ncAmount').innerText = ncAmount.toFixed(3) + " BD";
+        document.getElementById('totalAmount').innerText = totalAmount.toFixed(3) + " BD";
+    };
+
+    window.saveEntry = async function() {
+        const index = document.getElementById('itemSelect').value;
+        if (index === "") {
+            alert("Please select an item first!");
+            return;
+        }
+
+        const item = masterItems[index];
+        const opening = parseFloat(document.getElementById('opening').value) || 0;
+        const receive = parseFloat(document.getElementById('receive').value) || 0;
+        const sale = parseFloat(document.getElementById('sale').value) || 0;
+        const nc = parseFloat(document.getElementById('nc').value) || 0;
+        const batchExpiry = document.getElementById('entryExpiry').value || item.expiry || "";
+        const close = opening + receive - sale - nc;
+
+        const saleCost = sale * item.cost;
+        const ncCost = nc * item.cost;
+        const saleAmount = sale * item.salePrice;
+        const ncAmount = nc * item.ncPrice;
+        const totalAmount = saleAmount + ncAmount;
+
+        const entry = {
+            name: item.name,
+            packing: item.packing || "",
+            unit: item.unit || "can",
+            opening, receive, sale, nc, close,
+            cost: item.cost,
+            salePrice: item.salePrice,
+            ncPrice: item.ncPrice,
+            saleCost, ncCost,
+            saleAmount, ncAmount, totalAmount,
+            mfgDate: item.mfgDate || "",
+            expiry: batchExpiry,
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            await addDoc(collection(db, "dailyEntries"), entry);
+            await setDoc(doc(db, "masterItems", item.id), { opening: close }, { merge: true });
+            clearEntry();
+        } catch(e) {
+            alert("Error saving entry: " + e.message);
+        }
+    };
+
+    window.clearEntry = function() {
+        document.getElementById('itemSelect').value = "";
+        document.getElementById('opening').value = "";
+        document.getElementById('receive').value = "0";
+        document.getElementById('sale').value = "0";
+        document.getElementById('nc').value = "0";
+        document.getElementById('entryExpiry').value = "";
+        document.getElementById('displayUnit').innerText = "-";
+        document.getElementById('displayPacking').innerText = "-";
+        document.getElementById('cost').innerText = "0.000 BD";
+        document.getElementById('salePrice').innerText = "0.000 BD";
+        document.getElementById('ncPrice').innerText = "0.000 BD";
+        document.getElementById('mfgDate').innerText = "-";
+        document.getElementById('close').innerText = "0";
+        document.getElementById('saleCost').innerText = "0.000 BD";
+        document.getElementById('ncCost').innerText = "0.000 BD";
+        document.getElementById('saleAmount').innerText = "0.000 BD";
+        document.getElementById('ncAmount').innerText = "0.000 BD";
+        document.getElementById('totalAmount').innerText = "0.000 BD";
+    };
+
+    function checkExpiryStatus(expDateStr) {
+        if (!expDateStr) return { text: "OK", class: "ok" };
+        const expDate = new Date(expDateStr);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
+
+        if (diffDays < 0) return { text: "Expired", class: "expired" };
+        if (diffDays <= 30) return { text: "Expiring Soon (" + diffDays + " Days)", class: "soon" };
+        return { text: "OK", class: "ok" };
+    }
+
+    window.displayDaily = function() {
+        const tbody = document.getElementById('dailyTable');
+        const search = document.getElementById('search').value.toLowerCase();
+        tbody.innerHTML = "";
+
+        let tOpening = 0, tReceive = 0, tSale = 0, tNC = 0, tClose = 0;
+        let tSaleAmt = 0, tNCAmt = 0, tGrandAmt = 0;
+
+        dailyEntries.forEach((e, i) => {
+            if (e.name.toLowerCase().includes(search)) {
+                tOpening += e.opening;
+                tReceive += e.receive;
+                tSale += e.sale;
+                tNC += e.nc;
+                tClose += e.close;
+                tSaleAmt += e.saleAmount;
+                tNCAmt += e.ncAmount;
+                tGrandAmt += e.totalAmount;
+
+                const status = checkExpiryStatus(e.expiry);
+                const displayName = e.packing ? `${e.name} (${e.packing}) [${e.unit || 'can'}]` : `${e.name} [${e.unit || 'can'}]`;
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td><b>${displayName}</b></td>
+                        <td>${e.opening}</td>
+                        <td>${e.receive}</td>
+                        <td>${e.sale}</td>
+                        <td>${e.nc}</td>
+                        <td>${(e.saleCost || 0).toFixed(3)}</td>
+                        <td>${(e.ncCost || 0).toFixed(3)}</td>
+                        <td>${(e.salePrice || 0).toFixed(3)}</td>
+                        <td>${(e.ncPrice || 0).toFixed(3)}</td>
+                        <td>${(e.saleAmount || 0).toFixed(3)}</td>
+                        <td>${(e.ncAmount || 0).toFixed(3)}</td>
+                        <td><b>${(e.totalAmount || 0).toFixed(3)}</b></td>
+                        <td>${e.close}</td>
+                        <td>${e.mfgDate || '-'}</td>
+                        <td>${e.expiry || '-'}</td>
+                        <td class="${status.class}">${status.text}</td>
+                        <td class="no-print">
+                            <button class="delete" onclick="deleteDaily('${e.id}')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+
+        document.getElementById('totalItems').innerText = dailyEntries.length;
+        document.getElementById('totalOpening').innerText = tOpening;
+        document.getElementById('totalReceive').innerText = tReceive;
+        document.getElementById('totalSale').innerText = tSale;
+        document.getElementById('totalNC').innerText = tNC;
+        document.getElementById('totalClose').innerText = tClose;
+        document.getElementById('totalSaleAmount').innerText = tSaleAmt.toFixed(3);
+        document.getElementById('totalNCAmount').innerText = tNCAmt.toFixed(3);
+        document.getElementById('grandTotal').innerText = tGrandAmt.toFixed(3);
+    };
+
+    window.deleteDaily = async function(id) {
+        if (confirm("Delete this entry?")) {
+            await deleteDoc(doc(db, "dailyEntries", id));
+        }
+    };
+</script>
+</body>
+</html>
