@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Beverage Inventory System</title>
+    <title>Dual Outlet Inventory System</title>
     <style>
         *{ box-sizing:border-box; }
         body{ margin:0; font-family:Arial,sans-serif; background:#f3f5f7; color:#222; }
@@ -11,7 +11,18 @@
         .header{ background:#263238; color:white; padding:20px; border-radius:12px; margin-bottom:15px; }
         .header h1{margin:0} .header p{margin:5px 0 0;opacity:.8}
         
-        /* UNIQUE DIGITAL FACE WIDGET STYLES */
+        #lockScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(17, 24, 39, 0.95); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .lock-box {
+            background: white; padding: 30px; border-radius: 12px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 320px;
+        }
+        .lock-box h3 { margin-top: 0; color: #263238; }
+        .lock-box input { font-size: 22px; text-align: center; letter-spacing: 5px; margin-bottom: 15px; }
+
         .digital-face {
             background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
             border: 1px solid rgba(255, 255, 255, 0.15);
@@ -69,6 +80,10 @@
             100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
+        .outlet-switch-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .outlet-btn { flex: 1; padding: 14px; font-size: 16px; border-radius: 8px; border: 2px solid #263238; background: #e2e8f0; color: #333; cursor: pointer; font-weight: bold; }
+        .outlet-btn.active-outlet { background: #1976d2; color: white; border-color: #0d47a1; box-shadow: 0 4px 10px rgba(25, 118, 210, 0.4); }
+
         .nav{ display:flex; gap:8px; margin-bottom:15px; }
         .nav button{ background:white; border:1px solid #ddd; }
         .nav .active{ background:#1976d2; color:white; }
@@ -93,30 +108,199 @@
         table{ width:100%; border-collapse:collapse; min-width:1800px; }
         th{ background:#263238; color:white; padding:11px 8px; font-size:12px; white-space:nowrap; }
         td{ padding:10px 7px; border-bottom:1px solid #ddd; text-align:center; font-size:12px; white-space:nowrap; }
-        
         .expired{ font-weight:bold; color:#b71c1c; background-color:#ffcdd2; padding:5px 8px; border-radius:4px; }
         .soon{ font-weight:bold; color:#d32f2f; background-color:#ffebee; padding:5px 8px; border-radius:4px; }
         .ok{ font-weight:bold; color:#2e7d32; }
-        
-        .hidden{display:none}
+        .hidden{display:none !important}
         @media(max-width:600px){ .container{padding:8px} .header h1{font-size:21px} .nav button{flex:1} }
         @media print{
-            .no-print,.nav,.formBox,.cards{display:none!important}
-            body{background:white} .container{max-width:100%;padding:0}
-            .header{ background:white; color:black; text-align:center; }
-            table{min-width:100%} th{ background:#ddd!important; color:black!important; }
-            @page{ size:A4 landscape; margin:7mm; }
+            .no-print, .nav, .outlet-switch-bar, .formBox, .cards, .buttons, .form-grid { display:none!important; }
+            body{background:white; color:black;} .container{max-width:100%;padding:0; margin:0;}
+            .header{ background:white; color:black; text-align:center; padding:10px 0; border:none; box-shadow:none; }
+            .header h1{ font-size:20px; color:black; }
+            .header p{ color:#555; }
+            .digital-face { display: none !important; }
+            .box { border:none; box-shadow:none; padding:0; margin:0; background:white; }
+            table{min-width:100%!important; width:100%!important; font-size:11px;} 
+            th{ background:#eee!important; color:black!important; border:1px solid #999; padding:6px; }
+            td{ border:1px solid #ccc; padding:6px; color:black!important; }
+            .expired, .soon, .ok { background:transparent !important; color:black !important; font-weight:bold; }
+            @page{ size:A4 landscape; margin:10mm; }
         }
     </style>
 </head>
 <body>
+
+    <div id="lockScreen">
+        <div class="lock-box">
+            <h3>🔒 Enter Security Passcode</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter 4-digit PIN to access system</p>
+            <input type="password" id="pinInput" maxlength="4" placeholder="••••">
+            <button class="save" style="width:100%" onclick="checkPin()">Unlock System</button>
+            <p id="pinError" style="color:red; font-size:12px; margin-top:10px; display:none;">Incorrect Passcode! Use 3307</p>
+        </div>
+    </div>
+
 <div class="container">
-
     <div class="header">
-        <h1>🥤 Beverage Inventory System</h1>
-        <p>F&B Stock Management (Firebase Connected)</p>
+        <h1>🥤 Multi-Outlet Inventory System</h1>
+        <p id="activeOutletTitle">Active Outlet: Room Service</p>
+        <div class="digital-face no-print">
+            <div>
+                <div class="digital-clock" id="liveClock">00:00:00 AM</div>
+                <div class="digital-date" id="liveDate">LOADING DATE...</div>
+            </div>
+            <div class="digital-status">
+                <span class="pulse-dot"></span> REALTIME SYSTEM ACTIVE
+            </div>
+        </div>
+    </div><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Outlet Inventory System</title>
+    <style>
+        *{ box-sizing:border-box; }
+        body{ margin:0; font-family:Arial,sans-serif; background:#f3f5f7; color:#222; }
+        .container{ max-width:1600px; margin:auto; padding:15px; }
+        .header{ background:#263238; color:white; padding:20px; border-radius:12px; margin-bottom:15px; }
+        .header h1{margin:0} .header p{margin:5px 0 0;opacity:.8}
+        
+        #lockScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(17, 24, 39, 0.95); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
+        }
+        .lock-box {
+            background: white; padding: 30px; border-radius: 12px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 320px;
+        }
+        .lock-box h3 { margin-top: 0; color: #263238; }
+        .lock-box input { font-size: 22px; text-align: center; letter-spacing: 5px; margin-bottom: 15px; }
 
-        <!-- DIGITAL FACE WIDGET -->
+        .digital-face {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #00f2fe;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .digital-clock {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 26px;
+            font-weight: bold;
+            color: #00f2fe;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+            letter-spacing: 2px;
+        }
+        .digital-date {
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+        .digital-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .pulse-dot {
+            width: 9px;
+            height: 9px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .outlet-switch-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .outlet-btn { flex: 1; padding: 14px; font-size: 16px; border-radius: 8px; border: 2px solid #263238; background: #e2e8f0; color: #333; cursor: pointer; font-weight: bold; }
+        .outlet-btn.active-outlet { background: #1976d2; color: white; border-color: #0d47a1; box-shadow: 0 4px 10px rgba(25, 118, 210, 0.4); }
+
+        .nav{ display:flex; gap:8px; margin-bottom:15px; }
+        .nav button{ background:white; border:1px solid #ddd; }
+        .nav .active{ background:#1976d2; color:white; }
+        .box{ background:white; padding:18px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+        .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin-bottom:15px; }
+        .card{ background:white; padding:15px; border-radius:10px; box-shadow:0 2px 7px rgba(0,0,0,.07); }
+        .card small{color:#666} .card h2{margin:7px 0 0}
+        .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+        label{ display:block; font-size:13px; font-weight:bold; margin-bottom:5px; }
+        input,select{ width:100%; padding:11px; border:1px solid #ccc; border-radius:7px; }
+        input[readonly]{ background:#eee; }
+        button{ padding:11px 16px; border:0; border-radius:7px; cursor:pointer; font-weight:bold; }
+        .save{background:#1976d2;color:white} .clear{background:#777;color:white}
+        .edit{background:#f57c00;color:white} .delete{background:#d32f2f;color:white} .print{background:#2e7d32;color:white}
+        .buttons{ display:flex; gap:10px; margin-top:15px; flex-wrap:wrap; }
+        .auto{ margin-top:15px; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+        .autoBox{ background:#f1f3f4; padding:12px; border-radius:8px; }
+        .autoBox small{color:#666} .autoBox strong{ display:block; margin-top:5px; font-size:15px; }
+        .tableTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+        .search{max-width:350px}
+        .tableWrap{overflow-x:auto}
+        table{ width:100%; border-collapse:collapse; min-width:1800px; }
+        th{ background:#263238; color:white; padding:11px 8px; font-size:12px; white-space:nowrap; }
+        td{ padding:10px 7px; border-bottom:1px solid #ddd; text-align:center; font-size:12px; white-space:nowrap; }
+        .expired{ font-weight:bold; color:#b71c1c; background-color:#ffcdd2; padding:5px 8px; border-radius:4px; }
+        .soon{ font-weight:bold; color:#d32f2f; background-color:#ffebee; padding:5px 8px; border-radius:4px; }
+        .ok{ font-weight:bold; color:#2e7d32; }
+        .hidden{display:none !important}
+        @media(max-width:600px){ .container{padding:8px} .header h1{font-size:21px} .nav button{flex:1} }
+        @media print{
+            .no-print, .nav, .outlet-switch-bar, .formBox, .cards, .buttons, .form-grid { display:none!important; }
+            body{background:white; color:black;} .container{max-width:100%;padding:0; margin:0;}
+            .header{ background:white; color:black; text-align:center; padding:10px 0; border:none; box-shadow:none; }
+            .header h1{ font-size:20px; color:black; }
+            .header p{ color:#555; }
+            .digital-face { display: none !important; }
+            .box { border:none; box-shadow:none; padding:0; margin:0; background:white; }
+            table{min-width:100%!important; width:100%!important; font-size:11px;} 
+            th{ background:#eee!important; color:black!important; border:1px solid #999; padding:6px; }
+            td{ border:1px solid #ccc; padding:6px; color:black!important; }
+            .expired, .soon, .ok { background:transparent !important; color:black !important; font-weight:bold; }
+            @page{ size:A4 landscape; margin:10mm; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="lockScreen">
+        <div class="lock-box">
+            <h3>🔒 Enter Security Passcode</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter 4-digit PIN to access system</p>
+            <input type="password" id="pinInput" maxlength="4" placeholder="••••">
+            <button class="save" style="width:100%" onclick="checkPin()">Unlock System</button>
+            <p id="pinError" style="color:red; font-size:12px; margin-top:10px; display:none;">Incorrect Passcode! Use 3307</p>
+        </div>
+    </div>
+
+<div class="container">
+    <div class="header">
+        <h1>🥤 Multi-Outlet Inventory System</h1>
+        <p id="activeOutletTitle">Active Outlet: Room Service</p>
         <div class="digital-face no-print">
             <div>
                 <div class="digital-clock" id="liveClock">00:00:00 AM</div>
@@ -128,318 +312,197 @@
         </div>
     </div>
 
+    <!-- OUTLET SWITCH BUTTONS -->
+    <div class="outlet-switch-bar no-print">
+        <button id="btnRoomService" class="outlet-btn active-outlet" onclick="switchOutlet('roomService')">🛏️ Room Service</button>
+        <button id="btnZodiac" class="outlet-btn" onclick="switchOutlet('zodiac')">🍽️ Zodiac Restaurant</button>
+    </div>
+
     <div class="nav no-print">
         <button id="dailyBtn" class="active" onclick="showPage('daily')">📊 Daily Stock</button>
         <button id="masterBtn" onclick="showPage('master')">📦 Inventory Setup</button>
+        <button id="reportBtn" onclick="showPage('reports')">📁 Daily & Monthly Reports</button>
     </div>
 
-    <!-- DASHBOARD & DAILY PAGE -->
-    <div id="dailyPage">
-
-        <div class="cards">
-            <div class="card"><small>Total Items</small><h2 id="totalItems">0</h2></div>
-            <div class="card"><small>Opening</small><h2 id="totalOpening">0</h2></div>
-            <div class="card"><small>Receive</small><h2 id="totalReceive">0</h2></div>
-            <div class="card"><small>Sale</small><h2 id="totalSale">0</h2></div>
-            <div class="card"><small>NC</small><h2 id="totalNC">0</h2></div>
-            <div class="card"><small>Store Close</small><h2 id="totalClose">0</h2></div>
-            <div class="card"><small>Sale Amount</small><h2 id="totalSaleAmount">0.000</h2></div>
-            <div class="card"><small>NC Amount</small><h2 id="totalNCAmount">0.000</h2></div>
-            <div class="card"><small>Total Amount</small><h2 id="grandTotal">0.000</h2></div>
-        </div>
-
-        <!-- DAILY ENTRY -->
-        <div class="box no-print">
-            <h3>📝 Daily Stock Entry</h3>
-            <div class="form-grid">
-                <div>
-                    <label>Select Item</label>
-                    <select id="itemSelect" onchange="selectItem()">
-                        <option value="">-- Select Item --</option>
-                    </select>
-                </div>
-                <div>
-                    <label>Opening Stock</label>
-                    <input id="opening" readonly>
-                </div>
-                <div>
-                    <label>New Receive</label>
-                    <input id="receive" type="number" min="0" value="0" oninput="calculate()">
-                </div>
-                <div>
-                    <label>Sale</label>
-                    <input id="sale" type="number" min="0" value="0" oninput="calculate()">
-                </div>
-                <div>
-                    <label>NC</label>
-                    <input id="nc" type="number" min="0" value="0" oninput="calculate()">
-                </div>
-                <div>
-                    <label>Batch Expiry Date (New Received Stock)</label>
-                    <input id="entryExpiry" type="date">
-                </div>
-            </div>
-
-            <div class="auto">
-                <div class="autoBox"><small>Unit</small><strong id="displayUnit" style="color:#1976d2;">-</strong></div>
-                <div class="autoBox"><small>Packing</small><strong id="displayPacking">-</strong></div>
-                <div class="autoBox"><small>Cost Price</small><strong id="cost">0.000 BD</strong></div>
-                <div class="autoBox"><small>Sale Price</small><strong id="salePrice">0.000 BD</strong></div>
-                <div class="autoBox"><small>NC Price</small><strong id="ncPrice">0.000 BD</strong></div>
-                <div class="autoBox"><small>Mfg Date</small><strong id="mfgDate">-</strong></div>
-                <div class="autoBox"><small>Store Close</small><strong id="close">0</strong></div>
-                <div class="autoBox"><small>Sale Cost</small><strong id="saleCost">0.000 BD</strong></div>
-                <div class="autoBox"><small>NC Cost</small><strong id="ncCost">0.000 BD</strong></div>
-                <div class="autoBox"><small>Sale Amount</small><strong id="saleAmount">0.000 BD</strong></div>
-                <div class="autoBox"><small>NC Amount</small><strong id="ncAmount">0.000 BD</strong></div>
-                <div class="autoBox"><small>Total Amount</small><strong id="totalAmount">0.000 BD</strong></div>
-            </div>
-
-            <div class="buttons">
-                <button class="save" onclick="saveEntry()">💾 Save Entry</button>
-                <button class="clear" onclick="clearEntry()">Clear</button>
-            </div>
-        </div>
-        <!-- DAILY TABLE -->
-        <div class="box">
-            <div class="tableTop no-print">
-                <input class="search" id="search" placeholder="🔍 Search item..." oninput="displayDaily()">
-                <button class="print" onclick="window.print()">🖨️ Print Report</button>
-            </div>
-            <div class="tableWrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Item Name & Packing</th>
-                            <th>Opening</th>
-                            <th>Receive</th>
-                            <th>Sale</th>
-                            <th>NC</th>
-                            <th>Sale Cost</th>
-                            <th>NC Cost</th>
-                            <th>Sale Price</th>
-                            <th>NC Price</th>
-                            <th>Sale Amount</th>
-                            <th>NC Amount</th>
-                            <th>Total Amount</th>
-                            <th>Store Close</th>
-                            <th>Mfg Date</th>
-                            <th>Batch Expiry</th>
-                            <th>Status</th>
-                            <th class="no-print">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="dailyTable"></tbody>
-                </table>
-            </div>
-        </div>
-
+    <!-- OUTLET SWITCH BUTTONS -->
+    <div class="outlet-switch-bar no-print">
+        <button id="btnRoomService" class="outlet-btn active-outlet" onclick="switchOutlet('roomService')">🛏️ Room Service</button>
+        <button id="btnZodiac" class="outlet-btn" onclick="switchOutlet('zodiac')">🍽️ Zodiac Restaurant</button>
     </div>
 
-    <!-- INVENTORY MASTER -->
-    <div id="masterPage" class="hidden">
-        <div class="box formBox no-print">
-            <h3 id="masterTitle">📦 Add New Item</h3>
-            <div class="form-grid">
-                <div><label>Item Name</label><input id="mName" placeholder="Coca Cola"></div>
-                <div><label>Packing</label><input id="mPacking" placeholder="24 x 330ml"></div>
-                <div>
-                    <label>Unit</label>
-                    <select id="mUnit">
-                        <option value="can">can</option>
-                        <option value="bot">bot</option>
-                        <option value="box">box</option>
-                        <option value="pkt">pkt</option>
-                        <option value="pcs">pcs</option>
-                    </select>
-                </div>
-                <div><label>Opening Stock</label><input id="mOpening" type="number" min="0" step="0.01"></div>
-                <div><label>Cost Price</label><input id="mCost" type="number" min="0" step="0.001"></div>
-                <div><label>Sale Price</label><input id="mSalePrice" type="number" min="0" step="0.001"></div>
-                <div><label>NC Price</label><input id="mNCPrice" type="number" min="0" step="0.001"></div>
-                <div><label>Mfg Date (Production)</label><input id="mMfgDate" type="date"></div>
-                <div><label>Master Expiry Date</label><input id="mExpiry" type="date"></div>
-            </div>
-            <div class="buttons">
-                <button class="save" onclick="saveMaster()">💾 Save Item</button>
-                <button class="clear" onclick="clearMaster()">Clear</button>
-            </div>
-        </div>
-
-        <div class="box">
-            <div class="tableTop no-print">
-                <input class="search" id="masterSearch" placeholder="🔍 Search inventory..." oninput="displayMaster()">
-            </div>
-            <div class="tableWrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S/N</th>
-                            <th>Item Name & Packing</th>
-                            <th>Unit</th>
-                            <th>Opening Stock</th>
-                            <th>Cost Price</th>
-                            <th>Sale Price</th>
-                            <th>NC Price</th>
-                            <th>Mfg Date</th>
-                            <th>Master Expiry</th>
-                            <th class="no-print">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterTable"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-</div>
-
-<!-- FIREBASE SDK & APP LOGIC -->
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { 
-        getFirestore, collection, addDoc, setDoc, doc, deleteDoc, onSnapshot 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyChnmkoLdAFTYuK9gxnD5RX3qyz_qK4LoU",
-      authDomain: "room-service-inventory.firebaseapp.com",
-      projectId: "room-service-inventory",
-      storageBucket: "room-service-inventory.firebasestorage.app",
-      messagingSenderId: "402810379751",
-      appId: "1:402810379751:web:4335ba9136eb8654a3b142"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    let masterItems = [];
-    let dailyEntries = [];
-    let masterEditId = null;
-
-    // DIGITAL CLOCK
-    function updateDigitalClock() {
-        const now = new Date();
-        const hours = now.getHours();
-        const minutes = String(now.getMinutes()).padStart(2, '0');
-        const seconds = String(now.getSeconds()).padStart(2, '0');
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        const formattedHours = String(hours % 12 || 12).padStart(2, '0');
+    <div class="nav no-print">
+        <button id="dailyBtn" class="active" onclick="showPage('daily')">📊 Daily Stock</button>
+        <button id="masterBtn" onclick="showPage('master')">📦 Inventory Setup</button>
+        <button id="reportBtn" onclick="showPage('reports')">📁 Daily & Monthly Reports</button>
+    </div><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dual Outlet Inventory System</title>
+    <style>
+        *{ box-sizing:border-box; }
+        body{ margin:0; font-family:Arial,sans-serif; background:#f3f5f7; color:#222; }
+        .container{ max-width:1600px; margin:auto; padding:15px; }
+        .header{ background:#263238; color:white; padding:20px; border-radius:12px; margin-bottom:15px; }
+        .header h1{margin:0} .header p{margin:5px 0 0;opacity:.8}
         
-        const timeString = `${formattedHours}:${minutes}:${seconds} ${ampm}`;
-        const options = { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric' };
-        const dateString = now.toLocaleDateString('en-US', options);
-
-        const clockEl = document.getElementById('liveClock');
-        const dateEl = document.getElementById('liveDate');
-        if (clockEl) clockEl.innerText = timeString;
-        if (dateEl) dateEl.innerText = dateString;
-    }
-    setInterval(updateDigitalClock, 1000);
-    updateDigitalClock();
-
-    onSnapshot(collection(db, "masterItems"), (snapshot) => {
-        masterItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        populateSelect();
-        displayMaster();
-    });
-
-    onSnapshot(collection(db, "dailyEntries"), (snapshot) => {
-        dailyEntries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        displayDaily();
-    });
-
-    window.showPage = function(page) {
-        if (page === 'daily') {
-            document.getElementById('dailyPage').classList.remove('hidden');
-            document.getElementById('masterPage').classList.add('hidden');
-            document.getElementById('dailyBtn').classList.add('active');
-            document.getElementById('masterBtn').classList.remove('active');
-        } else {
-            document.getElementById('dailyPage').classList.add('hidden');
-            document.getElementById('masterPage').classList.remove('hidden');
-            document.getElementById('dailyBtn').classList.remove('active');
-            document.getElementById('masterBtn').classList.add('active');
+        #lockScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(17, 24, 39, 0.95); display: flex;
+            justify-content: center; align-items: center; z-index: 9999;
         }
-    };
+        .lock-box {
+            background: white; padding: 30px; border-radius: 12px; text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3); width: 320px;
+        }
+        .lock-box h3 { margin-top: 0; color: #263238; }
+        .lock-box input { font-size: 22px; text-align: center; letter-spacing: 5px; margin-bottom: 15px; }
 
-    window.saveMaster = async function() {
-        const name = document.getElementById('mName').value.trim();
-        const packing = document.getElementById('mPacking').value.trim();
-        const unit = document.getElementById('mUnit').value;
-        const opening = parseFloat(document.getElementById('mOpening').value) || 0;
-        const cost = parseFloat(document.getElementById('mCost').value) || 0;
-        const salePrice = parseFloat(document.getElementById('mSalePrice').value) || 0;
-        const ncPrice = parseFloat(document.getElementById('mNCPrice').value) || 0;
-        const mfgDate = document.getElementById('mMfgDate').value;
-        const expiry = document.getElementById('mExpiry').value;
-
-        if (!name) {
-            alert("Please enter Item Name!");
-            return;
+        .digital-face {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #00f2fe;
+            padding: 15px 20px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 15px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5), 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .digital-clock {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 26px;
+            font-weight: bold;
+            color: #00f2fe;
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.6);
+            letter-spacing: 2px;
+        }
+        .digital-date {
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 2px;
+        }
+        .digital-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.12);
+            padding: 8px 14px;
+            border-radius: 20px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .pulse-dot {
+            width: 9px;
+            height: 9px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
         }
 
-        const itemData = { name, packing, unit, opening, cost, salePrice, ncPrice, mfgDate, expiry };
+        .outlet-switch-bar { display: flex; gap: 10px; margin-bottom: 15px; }
+        .outlet-btn { flex: 1; padding: 14px; font-size: 16px; border-radius: 8px; border: 2px solid #263238; background: #e2e8f0; color: #333; cursor: pointer; font-weight: bold; }
+        .outlet-btn.active-outlet { background: #1976d2; color: white; border-color: #0d47a1; box-shadow: 0 4px 10px rgba(25, 118, 210, 0.4); }
 
-        try {
-            if (!masterEditId) {
-                await addDoc(collection(db, "masterItems"), itemData);
-            } else {
-                await setDoc(doc(db, "masterItems", masterEditId), itemData);
-                masterEditId = null;
-                document.getElementById('masterTitle').innerText = "📦 Add New Item";
-            }
-            clearMaster();
-        } catch(e) {
-            alert("Error saving to Firebase: " + e.message);
+        .nav{ display:flex; gap:8px; margin-bottom:15px; }
+        .nav button{ background:white; border:1px solid #ddd; }
+        .nav .active{ background:#1976d2; color:white; }
+        .box{ background:white; padding:18px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+        .cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:12px; margin-bottom:15px; }
+        .card{ background:white; padding:15px; border-radius:10px; box-shadow:0 2px 7px rgba(0,0,0,.07); }
+        .card small{color:#666} .card h2{margin:7px 0 0}
+        .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; }
+        label{ display:block; font-size:13px; font-weight:bold; margin-bottom:5px; }
+        input,select{ width:100%; padding:11px; border:1px solid #ccc; border-radius:7px; }
+        input[readonly]{ background:#eee; }
+        button{ padding:11px 16px; border:0; border-radius:7px; cursor:pointer; font-weight:bold; }
+        .save{background:#1976d2;color:white} .clear{background:#777;color:white}
+        .edit{background:#f57c00;color:white} .delete{background:#d32f2f;color:white} .print{background:#2e7d32;color:white}
+        .buttons{ display:flex; gap:10px; margin-top:15px; flex-wrap:wrap; }
+        .auto{ margin-top:15px; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; }
+        .autoBox{ background:#f1f3f4; padding:12px; border-radius:8px; }
+        .autoBox small{color:#666} .autoBox strong{ display:block; margin-top:5px; font-size:15px; }
+        .tableTop{ display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+        .search{max-width:350px}
+        .tableWrap{overflow-x:auto}
+        table{ width:100%; border-collapse:collapse; min-width:1800px; }
+        th{ background:#263238; color:white; padding:11px 8px; font-size:12px; white-space:nowrap; }
+        td{ padding:10px 7px; border-bottom:1px solid #ddd; text-align:center; font-size:12px; white-space:nowrap; }
+        .expired{ font-weight:bold; color:#b71c1c; background-color:#ffcdd2; padding:5px 8px; border-radius:4px; }
+        .soon{ font-weight:bold; color:#d32f2f; background-color:#ffebee; padding:5px 8px; border-radius:4px; }
+        .ok{ font-weight:bold; color:#2e7d32; }
+        .hidden{display:none !important}
+        @media(max-width:600px){ .container{padding:8px} .header h1{font-size:21px} .nav button{flex:1} }
+        @media print{
+            .no-print, .nav, .outlet-switch-bar, .formBox, .cards, .buttons, .form-grid { display:none!important; }
+            body{background:white; color:black;} .container{max-width:100%;padding:0; margin:0;}
+            .header{ background:white; color:black; text-align:center; padding:10px 0; border:none; box-shadow:none; }
+            .header h1{ font-size:20px; color:black; }
+            .header p{ color:#555; }
+            .digital-face { display: none !important; }
+            .box { border:none; box-shadow:none; padding:0; margin:0; background:white; }
+            table{min-width:100%!important; width:100%!important; font-size:11px;} 
+            th{ background:#eee!important; color:black!important; border:1px solid #999; padding:6px; }
+            td{ border:1px solid #ccc; padding:6px; color:black!important; }
+            .expired, .soon, .ok { background:transparent !important; color:black !important; font-weight:bold; }
+            @page{ size:A4 landscape; margin:10mm; }
         }
-    };
+    </style>
+</head>
+<body>
 
-    window.clearMaster = function() {
-        document.getElementById('mName').value = "";
-        document.getElementById('mPacking').value = "";
-        document.getElementById('mUnit').value = "can";
-        document.getElementById('mOpening').value = "";
-        document.getElementById('mCost').value = "";
-        document.getElementById('mSalePrice').value = "";
-        document.getElementById('mNCPrice').value = "";
-        document.getElementById('mMfgDate').value = "";
-        document.getElementById('mExpiry').value = "";
-        masterEditId = null;
-        document.getElementById('masterTitle').innerText = "📦 Add New Item";
-    };
+    <div id="lockScreen">
+        <div class="lock-box">
+            <h3>🔒 Enter Security Passcode</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:15px;">Enter 4-digit PIN to access system</p>
+            <input type="password" id="pinInput" maxlength="4" placeholder="••••">
+            <button class="save" style="width:100%" onclick="checkPin()">Unlock System</button>
+            <p id="pinError" style="color:red; font-size:12px; margin-top:10px; display:none;">Incorrect Passcode! Use 3307</p>
+        </div>
+    </div>
 
-    window.displayMaster = function() {
-        const tbody = document.getElementById('masterTable');
-        const search = document.getElementById('masterSearch').value.toLowerCase();
-        tbody.innerHTML = "";
+<div class="container">
+    <div class="header">
+        <h1>🥤 Multi-Outlet Inventory System</h1>
+        <p id="activeOutletTitle">Active Outlet: Room Service</p>
+        <div class="digital-face no-print">
+            <div>
+                <div class="digital-clock" id="liveClock">00:00:00 AM</div>
+                <div class="digital-date" id="liveDate">LOADING DATE...</div>
+            </div>
+            <div class="digital-status">
+                <span class="pulse-dot"></span> REALTIME SYSTEM ACTIVE
+            </div>
+        </div>
+    </div>
 
-        masterItems.forEach((item, i) => {
-            if (item.name.toLowerCase().includes(search)) {
-                const displayName = item.packing ? `${item.name} (${item.packing})` : item.name;
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${i + 1}</td>
-                        <td><b>${displayName}</b></td>
-                        <td><span class="ok">[${item.unit || 'can'}]</span></td>
-                        <td>${item.opening}</td>
-                        <td>${(item.cost || 0).toFixed(3)} BD</td>
-                        <td>${(item.salePrice || 0).toFixed(3)} BD</td>
-                        <td>${(item.ncPrice || 0).toFixed(3)} BD</td>
-                        <td>${item.mfgDate || '-'}</td>
-                        <td>${item.expiry || '-'}</td>
-                        <td class="no-print">
-                            <button class="edit" onclick="editMaster('${item.id}')">Edit</button>
-                            <button class="delete" onclick="deleteMaster('${item.id}')">Delete</button>
-                        </td>
-                    </tr>
-                `;
-            }
-        });
-    };
+    <!-- OUTLET SWITCH BUTTONS -->
+    <div class="outlet-switch-bar no-print">
+        <button id="btnRoomService" class="outlet-btn active-outlet" onclick="switchOutlet('roomService')">🛏️ Room Service</button>
+        <button id="btnZodiac" class="outlet-btn" onclick="switchOutlet('zodiac')">🍽️ Zodiac Restaurant</button>
+    </div>
 
-    window.editMaster = function(id) {
+    <div class="nav no-print">
+        <button id="dailyBtn" class="active" onclick="showPage('daily')">📊 Daily Stock</button>
+        <button id="masterBtn" onclick="showPage('master')">📦 Inventory Setup</button>
+        <button id="reportBtn" onclick="showPage('reports')">📁 Daily & Monthly Reports</button>
+    </div>window.editMaster = function(id) {
         const item = masterItems.find(i => i.id === id);
         if (!item) return;
         document.getElementById('mName').value = item.name;
@@ -457,7 +520,8 @@
 
     window.deleteMaster = async function(id) {
         if (confirm("Are you sure you want to delete this item?")) {
-            await deleteDoc(doc(db, "masterItems", id));
+            const masterCol = currentOutlet === 'roomService' ? "masterItems" : "zodiac_masterItems";
+            await deleteDoc(doc(db, masterCol, id));
         }
     };
 
@@ -468,6 +532,19 @@
             const label = item.packing ? `${item.name} (${item.packing}) [${item.unit || 'can'}]` : `${item.name} [${item.unit || 'can'}]`;
             select.innerHTML += `<option value="${i}">${label}</option>`;
         });
+
+        const repContainer = document.getElementById('reportItemCheckboxes');
+        if (repContainer) {
+            repContainer.innerHTML = '';
+            masterItems.forEach((item) => {
+                const labelName = item.packing ? `${item.name} (${item.packing})` : item.name;
+                repContainer.innerHTML += `
+                    <label style="font-weight: normal; display: inline-flex; align-items: center; gap: 5px; background: white; padding: 5px 10px; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 13px;">
+                        <input type="checkbox" value="${item.name}" onchange="generateReport()"> ${labelName}
+                    </label>
+                `;
+            });
+        }
     }
 
     window.selectItem = function() {
@@ -549,9 +626,12 @@
             createdAt: new Date().toISOString()
         };
 
+        const dailyCol = currentOutlet === 'roomService' ? "dailyEntries" : "zodiac_dailyEntries";
+        const masterCol = currentOutlet === 'roomService' ? "masterItems" : "zodiac_masterItems";
+
         try {
-            await addDoc(collection(db, "dailyEntries"), entry);
-            await setDoc(doc(db, "masterItems", item.id), { opening: close }, { merge: true });
+            await addDoc(collection(db, dailyCol), entry);
+            await setDoc(doc(db, masterCol, item.id), { opening: close }, { merge: true });
             clearEntry();
         } catch(e) {
             alert("Error saving entry: " + e.message);
@@ -653,9 +733,71 @@
 
     window.deleteDaily = async function(id) {
         if (confirm("Delete this entry?")) {
-            await deleteDoc(doc(db, "dailyEntries", id));
+            const dailyCol = currentOutlet === 'roomService' ? "dailyEntries" : "zodiac_dailyEntries";
+            await deleteDoc(doc(db, dailyCol, id));
         }
     };
+
+    window.generateReport = function() {
+        const startDate = document.getElementById('reportStartDate').value;
+        const endDate = document.getElementById('reportEndDate').value;
+        
+        const checkboxes = document.querySelectorAll('#reportItemCheckboxes input[type="checkbox"]:checked');
+        const selectedItems = Array.from(checkboxes).map(cb => cb.value);
+
+        const tbody = document.getElementById('reportTable');
+        tbody.innerHTML = "";
+
+        let totalSaleCount = 0;
+        let totalReceiveCount = 0;
+        let totalRevenueSum = 0;
+
+        const filtered = dailyEntries.filter(e => {
+            if(!e.createdAt) return false;
+            const eDate = e.createdAt.split('T')[0];
+            
+            let dateMatch = true;
+            if (startDate && eDate < startDate) dateMatch = false;
+            if (endDate && eDate > endDate) dateMatch = false;
+
+            let itemMatch = true;
+            if (selectedItems.length > 0) {
+                itemMatch = selectedItems.includes(e.name);
+            }
+
+            return dateMatch && itemMatch;
+        });
+
+        filtered.forEach((e, i) => {
+            totalSaleCount += (e.sale || 0);
+            totalReceiveCount += (e.receive || 0);
+            totalRevenueSum += (e.totalAmount || 0);
+
+            const displayName = e.packing ? `${e.name} (${e.packing})` : e.name;
+            const dateStr = e.createdAt ? e.createdAt.replace('T', ' ').substring(0, 16) : '-';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td>${dateStr}</td>
+                    <td><b>${displayName}</b></td>
+                    <td>${e.opening}</td>
+                    <td>${e.receive}</td>
+                    <td>${e.sale}</td>
+                    <td>${e.nc}</td>
+                    <td>${e.close}</td>
+                    <td><b>${(e.totalAmount || 0).toFixed(3)} BD</b></td>
+                </tr>
+            `;
+        });
+
+        document.getElementById('repTotalSale').innerText = totalSaleCount;
+        document.getElementById('repTotalReceive').innerText = totalReceiveCount;
+        document.getElementById('repTotalRevenue').innerText = totalRevenueSum.toFixed(3) + " BD";
+    };
+
+    // Initial load
+    setupFirebaseListeners();
 </script>
 </body>
-</html>
+            </html>
